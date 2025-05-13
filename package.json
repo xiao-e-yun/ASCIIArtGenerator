@@ -17,6 +17,7 @@
     "@vueuse/core": "^13.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "gpu.js": "^2.16.0",
     "lodash": "^4.17.21",
     "lucide-vue-next": "^0.509.0",
     "reka-ui": "^2.2.1",
