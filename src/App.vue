@@ -31,9 +31,10 @@ watch(file, async (file) => {
   ]
 })
 
-const imagePreview = computed<string | null | undefined>((prev) => {
+const imagePreview = computed<string | undefined>((prev) => {
   if (prev) URL.revokeObjectURL(prev)
-  return file.value && URL.createObjectURL(file.value)
+  if (file.value) return URL.createObjectURL(file.value)
+  return
 })
 
 useDark()
