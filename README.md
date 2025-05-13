@@ -9,12 +9,12 @@ Works offline, no data will be uploaded to the server.
 Use [GPU.js](https://gpu.rocks) to accelerate the process.
 
 ### Simple
-Just [open](https://xiao-e-yun.github.io/ascii-art-generator/) it in your browser, select or drop an image, and you will get the ASCII art in seconds.
+Just [open](https://xiao-e-yun.github.io/asciiArtGenerator/) it in your browser, select or drop an image, and you will get the ASCII art in seconds.
 
 ![Preview](preview.png)
 Preview 
 
-[Try it online](https://xiao-e-yun.github.io/ascii-art-generator/)
+[Try it online](https://xiao-e-yun.github.io/asciiArtGenerator/)
 
 ## Features
 [x] Custom Output Size
