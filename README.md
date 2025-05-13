@@ -1,39 +1,25 @@
-# ascii-art
+# ASCII Art Generator
+A simple ASCII art generator that converts image to ASCII art (also supports any characters).
+> Safe, Quick, Simple
 
-This template should help get you started developing with Vue 3 in Vite.
+### Safe
+Works offline, no data will be uploaded to the server.
 
-## Recommended IDE Setup
+### Quick
+Use [GPU.js](https://gpu.rocks) to accelerate the process.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+### Simple
+Just [open](https://xiao-e-yun.github.io/ascii-art-generator/) it in your browser, select or drop an image, and you will get the ASCII art in seconds.
 
-## Type Support for `.vue` Imports in TS
+![Preview](preview.png)
+Preview 
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+[Try it online](https://xiao-e-yun.github.io/ascii-art-generator/)
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-bun install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-bun dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-bun run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-bun lint
-```
+## Features
+[x] Custom Output Size
+[x] Any Characters (including square characters)
+[x] Granularity Control
+[ ] More Resize Algorithm (Only nearest currently)
+[ ] Faster Character Parse
+[ ] Video Support
