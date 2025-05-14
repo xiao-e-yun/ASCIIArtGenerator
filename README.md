@@ -17,9 +17,9 @@ Preview
 [Try it online](https://xiao-e-yun.github.io/ASCIIArtGenerator/)
 
 ## Features
-[x] Custom Output Size
-[x] Any Characters (including square characters)
-[x] Granularity Control
-[ ] More Resize Algorithm (Only nearest currently)
-[ ] Faster Character Parse
-[ ] Video Support
+- [x] Custom Output Size
+- [x] Any Characters (including square characters)
+- [x] Granularity Control
+- [ ] More Resize Algorithm (Only nearest currently)
+- [ ] Faster Character Parse
+- [ ] Video Support
