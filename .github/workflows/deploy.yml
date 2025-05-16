@@ -14,8 +14,12 @@ jobs:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 🛎️
+      - name: Checkout🛎️
         uses: actions/checkout@v3
+
+      - uses: oven-sh/setup-bun@v2 
+        with:
+          bun-version: latest
 
       - name: install gpu.js dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
@@ -23,13 +27,11 @@ jobs:
           packages: mesa-common-dev libxi-dev gcc-11 g++-11
           version: 1.0
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install and Build 🔧 
+      - name: Install 
         run: |
-          CC=gcc-11 CXX=g++-11 bun install --lockfile-only
+          CC=gcc-11 CXX=g++-11 bun install --frozen-lockfile
+
+      - name: Build 🔨
           bun run build
 
       - name: Deploy 🚀
