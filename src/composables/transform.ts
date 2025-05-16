@@ -12,6 +12,7 @@ declare global {
 export const useTransform = () => {
 
   // preload kernels
+  // gpu.js can't pass the kernels after vite transforms them
   eval(kernels)
 
   const image = ref<ImageBitmap>()
