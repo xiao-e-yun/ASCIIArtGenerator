@@ -23,10 +23,14 @@ jobs:
           packages: mesa-common-dev libxi-dev gcc-11 g++-11
           version: 1.0
 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Install and Build 🔧 
         run: |
-          CC=gcc-11 CXX=g++-11 npm install
-          npm run build
+          CC=gcc-11 CXX=g++-11 bun install --lockfile-only
+          bun run build
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
