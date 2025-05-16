@@ -1,8 +1,8 @@
-import { computed, ref, toRaw, toValue, type MaybeRefOrGetter } from 'vue'
-import { watchDeep } from '@vueuse/core'
+import { computed, toRaw, toValue, type MaybeRefOrGetter } from 'vue'
+import { useSessionStorage, watchDeep } from '@vueuse/core'
 
 import TextWorker from './text_renderer.worker?worker'
-import { chain, isEqual } from 'lodash'
+import { chain, cloneDeep, isEqual } from 'lodash'
 
 export type TexTRenderingRequest = {
   granularity: [number, number]
@@ -15,11 +15,17 @@ export const useTextRenderer = (
   characters: MaybeRefOrGetter<string>,
   granularity: MaybeRefOrGetter<[number, number]>,
 ) => {
-  const charactersData = ref({} as Record<string, number[] | null>)
+  const charactersData = useSessionStorage("charactersData",{} as Record<string, number[] | null>)
+  const prevGranularity = useSessionStorage("charactersGranularity",[1, 2] as [number, number])
 
   const worker = new TextWorker()
 
   watchDeep([characters, granularity] as const, ([characters, granularity]) => {
+    if (!isEqual(toValue(granularity), prevGranularity.value)) {
+      charactersData.value = {} as Record<string, number[]>
+      prevGranularity.value = cloneDeep(toValue(granularity))
+    }
+
     const charactersSet = toValue(characters)
       .split('')
       .filter((c) => {
@@ -33,10 +39,6 @@ export const useTextRenderer = (
       characters: charactersSet,
       granularity: toRaw(toValue(granularity)),
     } as TexTRenderingRequest)
-  })
-
-  watchDeep(granularity, (value, prev) => {
-    if (!isEqual(value, prev)) charactersData.value = {} as Record<string, number[]>
   })
 
   worker.onmessage = ({ data }: MessageEvent<TexTRenderingResult>) => {

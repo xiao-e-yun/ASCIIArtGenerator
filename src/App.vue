@@ -30,7 +30,6 @@ const image = ref<ImageBitmap | null>(null)
 const { charactersPixels } = useTextRenderer(characters, granularity)
 const { outputSize, output } = useTransform(image, granularity, charactersPixels)
 
-granularity.value = [1, 2]
 watch(file, async (file) => {
   if (!file) return
   image.value = await createImageBitmap(file)
