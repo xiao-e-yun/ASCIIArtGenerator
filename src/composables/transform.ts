@@ -1,6 +1,7 @@
-import { GPU, type KernelFunction, type Pixel } from 'gpu.js'
-import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
+import {GPU, type KernelFunction, type Pixel} from 'gpu.js'
+import {computed, ref, toValue, type MaybeRefOrGetter} from 'vue'
 import kernels from './transform.kernels.js?raw'
+import {chain} from 'lodash'
 
 declare global {
   interface Window {
@@ -12,7 +13,7 @@ declare global {
 export const useTransform = (
   image: MaybeRefOrGetter<ImageBitmap | null>,
   granularity: MaybeRefOrGetter<[number, number]>,
-  charactersPixels: MaybeRefOrGetter<[string, number[]][]>,
+  charactersPixels: MaybeRefOrGetter<[string, number[] | null][]>,
 ) => {
   // preload kernels
   // gpu.js can't pass the kernels after vite transforms them
@@ -52,17 +53,32 @@ export const useTransform = (
       Math.floor(outputSize.value[0] * $granularity[0]),
       Math.floor(outputSize.value[1] * $granularity[1]),
     ]
-    const brightness = getBrightness.setOutput(brightnessSize)($image, [
-      $image.width / brightnessSize[0],
-      $image.height / brightnessSize[1],
-    ])
+    const brightness = getBrightness
+      .setOutput(brightnessSize)($image, [
+        $image.width / brightnessSize[0],
+        $image.height / brightnessSize[1],
+      ])
 
-    const mappedCharacters = getCharacters.setOutput(outputSize.value)(
-      brightness,
-      $granularity,
-      $charactersPixels.map((c) => c[1]),
-      $charactersPixels.length,
-    ) as number[][]
+    const maxIterations = Math.max($charactersPixels.length, 64)
+    if (getCharacters.loopMaxIterations !== maxIterations) {
+      getCharacters.setLoopMaxIterations(maxIterations)
+    }
+
+    const mappedPixels = chain($charactersPixels)
+          .filter(([, pixels]) => Array.isArray(pixels))
+          .map(([, pixels]) => pixels as number[])
+          .value()
+
+    console.log('mappedPixels', mappedPixels)
+
+    const mappedCharacters = getCharacters
+      .setOutput(outputSize.value)
+      (
+        brightness,
+        $granularity,
+        mappedPixels,
+        mappedPixels.length,
+      ) as number[][]
 
     return mappedCharacters
       .map((y) =>
