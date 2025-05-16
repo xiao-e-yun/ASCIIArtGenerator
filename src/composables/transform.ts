@@ -64,26 +64,23 @@ export const useTransform = (
       getCharacters.setLoopMaxIterations(maxIterations)
     }
 
-    const mappedPixels = chain($charactersPixels)
-          .filter(([, pixels]) => Array.isArray(pixels))
-          .map(([, pixels]) => pixels as number[])
-          .value()
-
-    console.log('mappedPixels', mappedPixels)
+    const mappedPixels = $charactersPixels
+      .filter(([, pixels]) => Array.isArray(pixels))
 
     const mappedCharacters = getCharacters
       .setOutput(outputSize.value)
       (
         brightness,
         $granularity,
-        mappedPixels,
+        mappedPixels
+          .map(([, pixels]) => pixels as number[]),
         mappedPixels.length,
       ) as number[][]
 
     return mappedCharacters
       .map((y) =>
         Array.from(y)
-          .map((c) => $charactersPixels[c][0])
+          .map((c) => mappedPixels[c][0])
           .join(''),
       )
       .join('\n')
