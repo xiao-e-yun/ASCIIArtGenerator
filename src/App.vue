@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './components/ui/resizable'
 import { useTransform } from './composables/transform'
 import AsciiOutput from './components/AsciiOutput.vue'
-import { OutputMode } from './utils/output'
+import { DisplayMode } from './utils/output'
 import { Button } from './components/ui/button'
 import {
   Select,
@@ -23,20 +23,19 @@ const characters = useLocalStorage(
   'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !@#$%^&*()_+[]{}|;\':",.\\/<>?`~',
 )
 const granularity = useLocalStorage('granularity', [1, 2] as [number, number])
+const mode = useLocalStorage<DisplayMode>('display-mode', DisplayMode.Normal)
 
 const image = ref<ImageBitmap | null>(null)
 
 const { charactersPixels } = useTextRenderer(characters, granularity)
 const { outputSize, output } = useTransform(image, granularity, charactersPixels)
 
-const mode = ref<OutputMode>(OutputMode.Normal)
-
 granularity.value = [1, 2]
 watch(file, async (file) => {
   if (!file) return
   image.value = await createImageBitmap(file)
   outputSize.value = [
-    mode.value === OutputMode.Square ? 64 : 64 * 2,
+    mode.value === DisplayMode.Square ? 64 : 64 * 2,
     Math.floor((64 * image.value.height) / image.value.width),
   ]
 })
@@ -90,8 +89,8 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem :value="OutputMode.Normal">Normal</SelectItem>
-            <SelectItem :value="OutputMode.Square">Square</SelectItem>
+            <SelectItem :value="DisplayMode.Normal">Normal</SelectItem>
+            <SelectItem :value="DisplayMode.Square">Square</SelectItem>
           </SelectContent>
         </Select>
 

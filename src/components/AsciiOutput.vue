@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { OutputMode } from '@/utils/output'
+import { DisplayMode } from '@/utils/output'
 import { useElementSize } from '@vueuse/core'
 import { computed, useTemplateRef } from 'vue'
 
@@ -8,7 +8,7 @@ const TEXT_ASPECT_RATIO = 0.55
 const props = defineProps<{
   text: string | undefined
   size: [number, number]
-  mode: OutputMode
+  mode: DisplayMode
 }>()
 
 const el = useTemplateRef('el')
@@ -16,7 +16,7 @@ const { width } = useElementSize(el)
 
 const fontSize = computed(() => {
   const widthSize =
-    width.value / props.size[0] / (props.mode === OutputMode.Square ? 1 : TEXT_ASPECT_RATIO)
+    width.value / props.size[0] / (props.mode === DisplayMode.Square ? 1 : TEXT_ASPECT_RATIO)
   return widthSize
 })
 
