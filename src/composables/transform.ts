@@ -1,7 +1,6 @@
 import {GPU, type KernelFunction, type Pixel} from 'gpu.js'
 import {computed, ref, toValue, type MaybeRefOrGetter} from 'vue'
 import kernels from './transform.kernels.js?raw'
-import {chain} from 'lodash'
 
 declare global {
   interface Window {
