@@ -28,11 +28,10 @@ jobs:
           version: 1.0
 
       - name: Install 
-        run: |
-          CC=gcc-11 CXX=g++-11 bun install --frozen-lockfile
+        run: CC=gcc-11 CXX=g++-11 bun install --frozen-lockfile
 
       - name: Build 🔨
-          bun run build
+        run: bun run build
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
