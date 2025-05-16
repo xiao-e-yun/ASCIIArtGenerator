@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './components/ui/resizable'
 import { useTransform } from './composables/transform'
 import AsciiOutput from './components/AsciiOutput.vue'
-import { DisplayMode } from './utils/output'
+import { DisplayMode } from './utils'
 import { Button } from './components/ui/button'
 import {
   Select,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DisplayMode } from '@/utils/output'
+import { DisplayMode } from '@/utils'
 import { useElementSize } from '@vueuse/core'
 import { computed, useTemplateRef } from 'vue'
 
