@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDark } from '@vueuse/core'
+import { useDark, useLocalStorage } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './components/ui/resizable'
 import { useTransform } from './composables/transform'
@@ -14,10 +14,20 @@ import {
   SelectValue,
 } from './components/ui/select'
 import NumberInput from './components/NumberInput.vue'
+import { useTextRenderer } from './composables/text_renderer'
 
 const file = ref<File | null>()
 
-const { image, granularity, outputSize, characters, output } = useTransform()
+const characters = useLocalStorage(
+  'characters',
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !@#$%^&*()_+[]{}|;\':",.\\/<>?`~',
+)
+const granularity = useLocalStorage('granularity', [1, 2] as [number, number])
+
+const image = ref<ImageBitmap | null>(null)
+
+const { charactersPixels } = useTextRenderer(characters, granularity)
+const { outputSize, output } = useTransform(image, granularity, charactersPixels)
 
 const mode = ref<OutputMode>(OutputMode.Normal)
 

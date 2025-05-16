@@ -1,4 +1,4 @@
-window.getBrightnessKernel = function(image, scale) {
+window.getBrightnessKernel = function (image, scale) {
   const x = Math.floor(scale[0] * this.thread.x)
   const y = Math.floor(scale[1] * this.thread.y)
 
@@ -6,7 +6,7 @@ window.getBrightnessKernel = function(image, scale) {
   return (1 - (pixel.r * 0.2126 + pixel.g * 0.7152 + pixel.b * 0.0722)) * pixel.a
 }
 
-window.getCharactersKernel = function(image, granularity, characters, characterSize) {
+window.getCharactersKernel = function (image, granularity, characters, characterSize) {
   let target = 0
   let offset = Infinity
 
