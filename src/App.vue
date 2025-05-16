@@ -72,8 +72,8 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
         <NumberInput v-model="outputSize[1]" :max="2048" :min="1" class="w-full mt-2" />
 
         <p class="font-bold mt-2">Granularity</p>
-        <NumberInput v-model="granularity[0]" :max="16" :min="1" class="w-full mt-2" />
-        <NumberInput v-model="granularity[1]" :max="16" :min="1" class="w-full mt-2" />
+        <NumberInput v-model="granularity[0]" :max="8" :min="1" class="w-full mt-2" />
+        <NumberInput v-model="granularity[1]" :max="8" :min="1" class="w-full mt-2" />
 
         <p class="font-bold mt-2">Characters</p>
         <textarea

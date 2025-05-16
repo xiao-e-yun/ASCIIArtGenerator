@@ -1,5 +1,5 @@
-import {computed, toRaw, toValue, type MaybeRefOrGetter} from 'vue'
-import {useSessionStorage, watchDeep} from '@vueuse/core'
+import {computed, ref, toRaw, toValue, type MaybeRefOrGetter} from 'vue'
+import {watchDeep} from '@vueuse/core'
 
 import TextWorker from './text_renderer.worker?worker'
 import {chain, cloneDeep, isEqual} from 'lodash'
@@ -15,8 +15,8 @@ export const useTextRenderer = (
   characters: MaybeRefOrGetter<string>,
   granularity: MaybeRefOrGetter<[number, number]>,
 ) => {
-  const charactersData = useSessionStorage("charactersData", {} as Record<string, number[] | null>)
-  const prevGranularity = useSessionStorage("charactersGranularity", [1, 2] as [number, number])
+  const charactersData = ref({} as Record<string, number[] | null>)
+  const prevGranularity = ref([1, 2] as [number, number])
 
   const worker = new TextWorker()
 
@@ -39,7 +39,7 @@ export const useTextRenderer = (
       characters: charactersSet,
       granularity: toRaw(toValue(granularity)),
     } as TexTRenderingRequest)
-  })
+  }, { immediate: true })
 
   worker.onmessage = ({data}: MessageEvent<TexTRenderingResult>) => {
     for (const [char, pixels] of data) {
@@ -50,7 +50,8 @@ export const useTextRenderer = (
   const charactersPixels = computed(
     () =>
       chain(toValue(characters).split(''))
-        .map((c) => [c, charactersData.value[c]] as const)
+        .filter(c => c !== '\n')
+        .map((c) => [c, charactersData.value[c]] as [string, number[] | null])
         .value()
   )
 

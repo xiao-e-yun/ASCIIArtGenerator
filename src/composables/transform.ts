@@ -47,7 +47,11 @@ export const useTransform = (
 
     if (!$image) return
 
-    if (!$charactersPixels.length) return ''
+    const mappedPixels = $charactersPixels
+      .filter(([, pixels]) => pixels)
+
+    if (!mappedPixels.length) return ''
+
 
     const brightnessSize = [
       Math.floor(outputSize.value[0] * $granularity[0]),
@@ -59,13 +63,10 @@ export const useTransform = (
         $image.height / brightnessSize[1],
       ])
 
-    const maxIterations = Math.max($charactersPixels.length, 64)
+    const maxIterations = Math.max($charactersPixels.length, 8)
     if (getCharacters.loopMaxIterations !== maxIterations) {
       getCharacters.setLoopMaxIterations(maxIterations)
     }
-
-    const mappedPixels = $charactersPixels
-      .filter(([, pixels]) => Array.isArray(pixels))
 
     const mappedCharacters = getCharacters
       .setOutput(outputSize.value)
