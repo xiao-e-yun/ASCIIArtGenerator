@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useDark, useLocalStorage } from '@vueuse/core'
-import { computed, ref, watch } from 'vue'
+import { until, useDark, useLocalStorage } from '@vueuse/core'
+import { computed, ref, triggerRef, useTemplateRef, watch, type Ref } from 'vue'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './components/ui/resizable'
 import { useTransform } from './composables/transform'
 import AsciiOutput from './components/AsciiOutput.vue'
@@ -25,17 +25,60 @@ const characters = useLocalStorage(
 const granularity = useLocalStorage('granularity', [1, 2] as [number, number])
 const mode = useLocalStorage<DisplayMode>('display-mode', DisplayMode.Normal)
 
-const image = ref<ImageBitmap | null>(null)
+const frame = ref<HTMLCanvasElement>(document.createElement('canvas'))
+const frameCtx = frame.value.getContext('2d')!
+
+const image = useTemplateRef<HTMLImageElement>('image')
+const video = useTemplateRef<HTMLVideoElement>('video')
 
 const { charactersPixels } = useTextRenderer(characters, granularity)
-const { outputSize, output } = useTransform(image, granularity, charactersPixels)
+const { outputSize, output } = useTransform(frame, granularity, charactersPixels)
 
 watch(file, async (file) => {
-  if (!file) return
-  image.value = await createImageBitmap(file)
+  if (!file) {
+    frame.value.width = 0
+    frame.value.height = 0
+    triggerRef(frame)
+    return
+  }
+
+  const onLoaded = async <T extends HTMLImageElement | HTMLVideoElement>(el: Ref<T | null>) => {
+    await until(el).not.toBeUndefined()
+    await new Promise((r) => {
+      el.value!.onload = r
+      el.value!.onloadeddata = r
+    })
+    return el.value!
+  }
+
+  if (file.type.startsWith('image')) {
+    const $image = await onLoaded(image)
+    frame.value.width = $image.naturalWidth
+    frame.value.height = $image.naturalHeight
+    frameCtx.setTransform(1, 0, 0, -1, 0, frame.value.height)
+    frameCtx.drawImage($image, 0, 0)
+    triggerRef(frame)
+  } else {
+    await until(video).not.toBeUndefined()
+    const $video = await onLoaded(video)
+    $video.volume = 0.5
+    frame.value.width = $video.videoWidth
+    frame.value.height = $video.videoHeight
+    frameCtx.setTransform(1, 0, 0, -1, 0, frame.value.height)
+
+    const next = () => {
+      if (!video.value) return
+      frameCtx?.drawImage($video, 0, 0)
+      triggerRef(frame)
+      $video.requestVideoFrameCallback(next)
+    }
+    frameCtx.drawImage($video, 0, 0)
+    $video.requestVideoFrameCallback(next)
+  }
+
   outputSize.value = [
     mode.value === DisplayMode.Square ? 64 : 64 * 2,
-    Math.floor((64 * image.value.height) / image.value.width),
+    Math.floor((64 * frame.value!.height) / frame.value!.width),
   ]
 })
 
@@ -103,10 +146,22 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
     <ResizableHandle />
     <ResizablePanel as-child>
       <main class="flex min-w-1/2">
-        <img
-          :src="imagePreview"
-          class="w-1/2 max-w-full max-h-full object-contain m-auto border-r"
-        />
+        <template v-if="file">
+          <img
+            v-if="file.type.startsWith('image/')"
+            ref="image"
+            :src="imagePreview"
+            class="w-1/2 max-w-full max-h-full object-contain m-auto border-r"
+          />
+          <video
+            v-else
+            :src="imagePreview"
+            ref="video"
+            class="w-1/2 max-w-full max-h-full object-contain m-auto border-r"
+            controls
+            autoplay
+          />
+        </template>
         <AsciiOutput
           :text="output"
           :size="outputSize"
@@ -125,7 +180,7 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
     <input
       class="opacity-0 absolute w-full h-full top-0"
       type="file"
-      accept="image/*"
+      accept="image/*,video/*"
       @change="file = ($event.target as HTMLInputElement)?.files?.item(0)"
     />
   </label>
