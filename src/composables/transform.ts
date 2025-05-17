@@ -1,5 +1,5 @@
-import {GPU, type KernelFunction, type Pixel} from 'gpu.js'
-import {computed, ref, toValue, type MaybeRefOrGetter} from 'vue'
+import { GPU, type IKernelRunShortcut, type KernelFunction, type Pixel } from 'gpu.js'
+import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
 import kernels from './transform.kernels.js?raw'
 
 declare global {
@@ -10,7 +10,7 @@ declare global {
 }
 
 export const useTransform = (
-  image: MaybeRefOrGetter<ImageBitmap | null>,
+  image: MaybeRefOrGetter<ImageBitmap | HTMLCanvasElement | null>,
   granularity: MaybeRefOrGetter<[number, number]>,
   charactersPixels: MaybeRefOrGetter<[string, number[] | null][]>,
 ) => {
@@ -18,7 +18,7 @@ export const useTransform = (
   // gpu.js can't pass the kernels after vite transforms them
   eval(kernels)
 
-  const outputSize = ref([0, 0] as [number, number])
+  const outputSize = ref([64, 64] as [number, number])
 
   const gpu = new GPU()
 
@@ -31,51 +31,50 @@ export const useTransform = (
     },
   )
 
-  const getCharacters = gpu.createKernel<[number[][], [number, number], number[][], number], {}>(
-    window.getCharactersKernel,
-    {
-      dynamicArguments: true,
-      dynamicOutput: true,
-    },
-  )
+  const getCharacters = computed<IKernelRunShortcut>((prev) => {
+    let isChanged = !prev
+
+    const maxIterations = Math.max(2 ** Math.ceil(Math.log2(toValue(charactersPixels).length)), 256)
+
+    isChanged ||= prev?.loopMaxIterations !== maxIterations
+
+    if (!isChanged) return prev!
+
+    if (prev) prev.destroy()
+    return gpu
+      .createKernel(window.getCharactersKernel, {
+        dynamicArguments: true,
+        dynamicOutput: true,
+      })
+      .setLoopMaxIterations(maxIterations)
+  })
 
   const output = computed(() => {
     const $image = toValue(image)
     const $granularity = toValue(granularity)
     const $charactersPixels = toValue(charactersPixels)
 
-    if (!$image) return
+    if (!$image || !$image.width || !$image.height) return ''
 
-    const mappedPixels = $charactersPixels
-      .filter(([, pixels]) => pixels)
+    const mappedPixels = $charactersPixels.filter(([, pixels]) => pixels)
 
     if (!mappedPixels.length) return ''
-
 
     const brightnessSize = [
       Math.floor(outputSize.value[0] * $granularity[0]),
       Math.floor(outputSize.value[1] * $granularity[1]),
     ]
-    const brightness = getBrightness
-      .setOutput(brightnessSize)($image, [
-        $image.width / brightnessSize[0],
-        $image.height / brightnessSize[1],
-      ])
+    const brightness = getBrightness.setOutput(brightnessSize)($image, [
+      $image.width / brightnessSize[0],
+      $image.height / brightnessSize[1],
+    ])
 
-    const maxIterations = Math.max($charactersPixels.length, 8)
-    if (getCharacters.loopMaxIterations !== maxIterations) {
-      getCharacters.setLoopMaxIterations(maxIterations)
-    }
-
-    const mappedCharacters = getCharacters
-      .setOutput(outputSize.value)
-      (
-        brightness,
-        $granularity,
-        mappedPixels
-          .map(([, pixels]) => pixels as number[]),
-        mappedPixels.length,
-      ) as number[][]
+    const mappedCharacters = getCharacters.value.setOutput(outputSize.value)(
+      brightness,
+      $granularity,
+      mappedPixels.map(([, pixels]) => pixels as number[]),
+      mappedPixels.length,
+    ) as number[][]
 
     return mappedCharacters
       .map((y) =>
