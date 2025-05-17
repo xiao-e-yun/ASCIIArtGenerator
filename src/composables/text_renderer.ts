@@ -54,6 +54,7 @@ export const useTextRenderer = (
   const charactersPixels = computed(() =>
     chain(toValue(characters).split(''))
       .filter((c) => c !== '\n')
+      .union()
       .map((c) => [c, charactersData.value[c]] as [string, number[] | null])
       .value(),
   )
