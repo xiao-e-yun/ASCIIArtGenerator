@@ -1,5 +1,5 @@
-import { GPU, type IKernelRunShortcut, type KernelFunction, type Pixel } from 'gpu.js'
-import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
+import {GPU, type IKernelRunShortcut, type KernelFunction, type Pixel} from 'gpu.js'
+import {computed, toValue, type MaybeRefOrGetter} from 'vue'
 import kernels from './transform.kernels.js?raw'
 
 declare global {
@@ -60,15 +60,15 @@ export const useTransform = (
     if (!mappedPixels.length) return ''
 
     const brightnessSize = [
-      Math.floor(outputSize.value[0] * $granularity[0]),
-      Math.floor(outputSize.value[1] * $granularity[1]),
+      Math.floor(toValue(outputSize)[0] * $granularity[0]),
+      Math.floor(toValue(outputSize)[1] * $granularity[1]),
     ]
     const brightness = getBrightness.setOutput(brightnessSize)($image, [
       $image.width / brightnessSize[0],
       $image.height / brightnessSize[1],
     ])
 
-    const mappedCharacters = getCharacters.value.setOutput(outputSize.value)(
+    const mappedCharacters = getCharacters.value.setOutput(toValue(outputSize))(
       brightness,
       $granularity,
       mappedPixels.map(([, pixels]) => pixels as number[]),

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {breakpointsTailwind, createReusableTemplate, syncRef, until, useBreakpoints, useDark, useLocalStorage} from '@vueuse/core'
+import {breakpointsTailwind, createReusableTemplate, until, useBreakpoints, useDark, useLocalStorage} from '@vueuse/core'
 import {computed, reactive, ref, triggerRef, useTemplateRef, watch, type Ref} from 'vue'
 import {useTransform} from './composables/transform'
 import AsciiOutput from './components/AsciiOutput.vue'
