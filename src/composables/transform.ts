@@ -11,14 +11,13 @@ declare global {
 
 export const useTransform = (
   image: MaybeRefOrGetter<ImageBitmap | HTMLCanvasElement | null>,
+  outputSize: MaybeRefOrGetter<[number, number]>,
   granularity: MaybeRefOrGetter<[number, number]>,
   charactersPixels: MaybeRefOrGetter<[string, number[] | null][]>,
 ) => {
   // preload kernels
   // gpu.js can't pass the kernels after vite transforms them
   eval(kernels)
-
-  const outputSize = ref([64, 64] as [number, number])
 
   const gpu = new GPU()
 
@@ -88,6 +87,5 @@ export const useTransform = (
   return {
     image,
     output,
-    outputSize,
   }
 }

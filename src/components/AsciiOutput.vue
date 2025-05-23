@@ -15,15 +15,13 @@ const el = useTemplateRef('el')
 const {width} = useElementSize(el)
 
 const fontSize = computed(() => {
-  const widthSize =
-    width.value / props.size[0] / (props.mode === DisplayMode.Square ? 1 : TEXT_ASPECT_RATIO)
-  return widthSize
+  return width.value / props.size[0] / (props.mode === DisplayMode.Square ? 1 : TEXT_ASPECT_RATIO)
 })
 </script>
 
 <template>
   <div ref="el">
-    <pre class="origin-left bg-white text-black w-fit leading-none font-mono" :style="{
+    <pre class="w-full bg-white text-black leading-none font-mono" :style="{
       fontSize: fontSize.toString() + 'px',
     }" v-text="text" />
   </div>

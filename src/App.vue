@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { until, useDark, useLocalStorage } from '@vueuse/core'
-import { computed, ref, triggerRef, useTemplateRef, watch, type Ref } from 'vue'
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './components/ui/resizable'
-import { useTransform } from './composables/transform'
+import {breakpointsTailwind, createReusableTemplate, syncRef, until, useBreakpoints, useDark, useLocalStorage} from '@vueuse/core'
+import {computed, reactive, ref, triggerRef, useTemplateRef, watch, type Ref} from 'vue'
+import {useTransform} from './composables/transform'
 import AsciiOutput from './components/AsciiOutput.vue'
-import { DisplayMode } from './utils'
-import { Button } from './components/ui/button'
+import {DisplayMode} from './utils'
+import {Button} from './components/ui/button'
 import {
   Select,
   SelectContent,
@@ -14,7 +13,11 @@ import {
   SelectValue,
 } from './components/ui/select'
 import NumberInput from './components/NumberInput.vue'
-import { useTextRenderer } from './composables/text_renderer'
+import {useTextRenderer} from './composables/text_renderer'
+import {ArrowLeftFromLine, ArrowRightToLine, Github} from 'lucide-vue-next'
+import {Separator} from './components/ui/separator'
+import {Textarea} from './components/ui/textarea'
+import {Toggle} from './components/ui/toggle'
 
 const file = ref<File | null>()
 
@@ -31,8 +34,20 @@ const frameCtx = frame.value.getContext('2d')!
 const image = useTemplateRef<HTMLImageElement>('image')
 const video = useTemplateRef<HTMLVideoElement>('video')
 
-const { charactersPixels } = useTextRenderer(characters, granularity)
-const { outputSize, output } = useTransform(frame, granularity, charactersPixels)
+const size = reactive<[number | undefined, number | undefined]>([64, undefined])
+const doubleSize = useLocalStorage('double-size', true)
+const isDouble = computed(() => mode.value === DisplayMode.Normal && doubleSize.value)
+
+const outputSize = computed(() => {
+  const aspectRatio = frame.value.width / frame.value.height
+  return [
+    (size[0] || Math.ceil((size[1] || 0) * aspectRatio)) * (isDouble.value ? 2 : 1) || 0,
+    size[1] || Math.ceil((size[0] || 0) * (1 / aspectRatio)) || 0,
+  ] as [number, number]
+})
+
+const {charactersPixels} = useTextRenderer(characters, granularity)
+const {output} = useTransform(frame, outputSize, granularity, charactersPixels)
 
 watch(file, async (file) => {
   if (!file) {
@@ -75,11 +90,6 @@ watch(file, async (file) => {
     frameCtx.drawImage($video, 0, 0)
     $video.requestVideoFrameCallback(next)
   }
-
-  outputSize.value = [
-    mode.value === DisplayMode.Square ? 64 : 64 * 2,
-    Math.floor((64 * frame.value!.height) / frame.value!.width),
-  ]
 })
 
 const imagePreview = computed<string | undefined>((prev) => {
@@ -88,7 +98,18 @@ const imagePreview = computed<string | undefined>((prev) => {
   return undefined
 })
 
+const [DefineSettings, Settings] = createReusableTemplate()
+
+const collapse = ref(false)
+
+const isSmall = useBreakpoints(breakpointsTailwind).smallerOrEqual('sm')
+
 useDark()
+
+const visibility = reactive({
+  source: true,
+  output: true,
+})
 
 function dropFile(event: DragEvent) {
   event.preventDefault()
@@ -107,81 +128,90 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
 </script>
 
 <template>
-  <ResizablePanelGroup direction="horizontal" v-if="file" class="!h-screen">
-    <ResizablePanel as-child class="min-w-[200px] p-4 !overflow-y-auto" :default-size="20">
-      <aside>
-        <p class="font-bold mt-2">Size</p>
-        <NumberInput v-model="outputSize[0]" :max="2048" :min="1" class="w-full mt-2" />
-        <NumberInput v-model="outputSize[1]" :max="2048" :min="1" class="w-full mt-2" />
+  <DefineSettings>
+    <aside class="flex flex-col gap-2 p-4 relative">
+      <Button @click="collapse = true" class="absolute top-0 right-0 rounded-none" variant="ghost" v-if="!isSmall">
+        <ArrowLeftFromLine />
+      </Button>
 
-        <p class="font-bold mt-2">Granularity</p>
-        <NumberInput v-model="granularity[0]" :max="8" :min="1" class="w-full mt-2" />
-        <NumberInput v-model="granularity[1]" :max="8" :min="1" class="w-full mt-2" />
+      <p>Size</p>
+      <NumberInput v-model="size[0]" :default-value="outputSize[0]" :max="2048" :min="0" class="w-full" />
+      <NumberInput v-model="size[1]" :default-value="outputSize[1]" :max="2048" :min="0" class="w-full" :class="{
+        placeholder: !size[1]
+      }" />
 
-        <p class="font-bold mt-2">Characters</p>
-        <textarea
-          v-model="characters"
-          class="p-2 w-full h-64 mt-2 bg-secondary"
-          placeholder="Characters"
-        />
+      <p class="font-bold">Granularity</p>
+      <NumberInput v-model="granularity[0]" :max="8" :min="1" class="w-full" />
+      <NumberInput v-model="granularity[1]" :max="8" :min="1" class="w-full" />
 
-        <p class="font-bold mt-2">Mode</p>
-        <Select v-model="mode" class="w-full mt-2">
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem :value="DisplayMode.Normal">Normal</SelectItem>
-            <SelectItem :value="DisplayMode.Square">Square</SelectItem>
-          </SelectContent>
-        </Select>
+      <p class="font-bold">Characters</p>
+      <Textarea v-model="characters" class="p-2 w-full h-64 bg-secondary" placeholder="Characters" />
 
-        <p class="font-bold mt-2">Option</p>
-        <div class="flex items-center gap-2 mt-2">
-          <Button variant="destructive" @click="file = null">Exit</Button>
-          <Button @click="copy">Copy</Button>
+      <p class="font-bold">Display</p>
+      <Select v-model="mode" class="w-full">
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem :value="DisplayMode.Normal">Normal</SelectItem>
+          <SelectItem :value="DisplayMode.Square">Square</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <p class="font-bold">View</p>
+      <div class="flex gap-2">
+        <Toggle v-model="visibility.source">Source</Toggle>
+        <Toggle v-model="visibility.output">Output</Toggle>
+      </div>
+
+      <p class="font-bold">Option</p>
+      <div class="flex items-center gap-2">
+        <Button variant="destructive" @click="file = null">Exit</Button>
+        <Button @click="copy">Copy</Button>
+      </div>
+
+      <Separator />
+
+      <a href="https://github.com/xiao-e-yun/ASCIIArtGenerator" target="_blank" class="flex
+        items-center gap-2 underline">
+        <Github />
+        Source
+      </a>
+    </aside>
+  </DefineSettings>
+
+  <template v-if="file">
+    <div class="flex smsm::h-screen w-full">
+      <template v-if="!isSmall && !collapse">
+        <Settings class="w-sm !overflow-y-auto border-r" />
+      </template>
+      <main class="relative flex w-full">
+        <Button @click="collapse = false" class="absolute top-0 left-0 rounded-none" variant="ghost"
+          v-if="!isSmall && collapse">
+          <ArrowRightToLine />
+        </Button>
+
+
+        <div v-if="file" v-show="visibility.source" class="flex-1 m-auto border-r">
+          <img v-if="file.type.startsWith('image/')" ref="image" :src="imagePreview"
+            class="w-full object-contain max-w-full max-h-full m-auto " />
+          <video v-else :src="imagePreview" ref="video" class="w-full max-w-full max-h-full m-auto" controls
+            autoplay />
         </div>
-      </aside>
-    </ResizablePanel>
-    <ResizableHandle />
-    <ResizablePanel as-child>
-      <main class="flex min-w-1/2">
-        <template v-if="file">
-          <img
-            v-if="file.type.startsWith('image/')"
-            ref="image"
-            :src="imagePreview"
-            class="w-1/2 max-w-full max-h-full object-contain m-auto border-r"
-          />
-          <video
-            v-else
-            :src="imagePreview"
-            ref="video"
-            class="w-1/2 max-w-full max-h-full object-contain m-auto border-r"
-            controls
-            autoplay
-          />
-        </template>
-        <AsciiOutput
-          :text="output"
-          :size="outputSize"
-          :mode="mode"
-          class="w-1/2 max-w-full max-h-full m-auto"
-        />
+        <AsciiOutput v-if="visibility.output" :text="output" :size="outputSize" :mode="mode"
+                     class="flex-1 m-auto" :style="{ maxWidth: (visibility.output &&
+                     visibility.source) ? '50%' : ''}" />
       </main>
-    </ResizablePanel>
-  </ResizablePanelGroup>
+    </div>
+    <Settings v-if="isSmall" class="border-t" />
+  </template>
 
   <label v-else class="relative w-screen h-screen flex items-center justify-center">
     <div class="text-center w-4/5 h-4/5 border flex flex-col justify-center rounded-lg">
       <h1 class="text-xl font-bold">ASCII Art Generator</h1>
       <p>Select or drag an image here</p>
     </div>
-    <input
-      class="opacity-0 absolute w-full h-full top-0"
-      type="file"
-      accept="image/*,video/*"
-      @change="file = ($event.target as HTMLInputElement)?.files?.item(0)"
-    />
+    <input class="opacity-0 absolute w-full h-full top-0" type="file" accept="image/*,video/*"
+      @change="file = ($event.target as HTMLInputElement)?.files?.item(0)" />
   </label>
 </template>
