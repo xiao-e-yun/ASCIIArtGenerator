@@ -181,10 +181,8 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
   </DefineSettings>
 
   <template v-if="file">
-    <div class="flex smsm::h-screen w-full">
-      <template v-if="!isSmall && !collapse">
-        <Settings class="w-sm !overflow-y-auto border-r" />
-      </template>
+    <div class="flex sm:h-screen w-full">
+      <Settings v-if="!isSmall && !collapse" class="w-sm border-r overflow-auto" />
       <main class="relative flex w-full">
         <Button @click="collapse = false" class="absolute top-0 left-0 rounded-none" variant="ghost"
           v-if="!isSmall && collapse">
@@ -195,12 +193,13 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
         <div v-if="file" v-show="visibility.source" class="flex-1 m-auto border-r">
           <img v-if="file.type.startsWith('image/')" ref="image" :src="imagePreview"
             class="w-full object-contain max-w-full max-h-full m-auto " />
-          <video v-else :src="imagePreview" ref="video" class="w-full max-w-full max-h-full m-auto" controls
-            autoplay />
+          <video v-else :src="imagePreview" ref="video" class="w-full max-w-full max-h-full m-auto" controls autoplay />
         </div>
-        <AsciiOutput v-if="visibility.output" :text="output" :size="outputSize" :mode="mode"
-                     class="flex-1 m-auto" :style="{ maxWidth: (visibility.output &&
-                     visibility.source) ? '50%' : ''}" />
+        <AsciiOutput v-if="visibility.output" :text="output" :size="outputSize" :mode="mode" class="flex-1 m-auto"
+          :style="{
+            maxWidth: (visibility.output &&
+              visibility.source) ? '50%' : ''
+          }" />
       </main>
     </div>
     <Settings v-if="isSmall" class="border-t" />
