@@ -182,8 +182,8 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
 
   <template v-if="file">
     <div class="flex sm:h-screen w-full">
-      <Settings v-if="!isSmall && !collapse" class="w-sm border-r overflow-auto" />
-      <main class="relative flex w-full">
+      <Settings v-if="!isSmall && !collapse" class="w-sm border-r overflow-auto flex-none" />
+      <main class="relative flex flex-1 overflow-x-hidden">
         <Button @click="collapse = false" class="absolute top-0 left-0 rounded-none" variant="ghost"
           v-if="!isSmall && collapse">
           <ArrowRightToLine />
@@ -195,8 +195,8 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
             class="w-full object-contain max-w-full max-h-full m-auto " />
           <video v-else :src="imagePreview" ref="video" class="w-full max-w-full max-h-full m-auto" controls autoplay />
         </div>
-        <AsciiOutput v-if="visibility.output" :text="output" :size="outputSize" :mode="mode" class="flex-1 m-auto"
-          :style="{
+        <AsciiOutput v-if="visibility.output" :text="output" :size="outputSize" :mode="mode"
+                     class="flex-1 m-auto overflow-hidden" :style="{
             maxWidth: (visibility.output &&
               visibility.source) ? '50%' : ''
           }" />
