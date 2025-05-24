@@ -18,7 +18,7 @@ import {ArrowLeftFromLine, ArrowRightToLine, Github} from 'lucide-vue-next'
 import {Separator} from './components/ui/separator'
 import {Textarea} from './components/ui/textarea'
 import {Toggle} from './components/ui/toggle'
-import {Input} from './components/ui/input'
+import {Slider} from './components/ui/slider'
 
 const file = ref<File | null>()
 
@@ -49,9 +49,9 @@ const outputSize = computed(() => {
   ] as [number, number]
 })
 
-const {charactersPixels,characterBrightnessBounds} = useTextRenderer(characters, granularity)
+const {charactersPixels, characterBrightnessBounds} = useTextRenderer(characters, granularity)
 const {output} = useTransform(frame, outputSize, granularity, charactersPixels, characterBrightnessBounds,
-colorInversion, brightnessBounds)
+  colorInversion, brightnessBounds)
 
 watch(file, async (file) => {
   if (!file) {
@@ -139,9 +139,11 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
       </Button>
 
       <p>Brightness Bounds</p>
-      <Input type="range" v-model.number="brightnessBounds[0]" :max="1" :min="0" :step="0.01" class="w-full" />
-      <Input type="range" v-model.number="brightnessBounds[1]" :max="1" :min="0" :step="0.01" class="w-full" />
+      <Slider v-model="brightnessBounds" :max="1" :min="0" :step="0.01" class="w-full" />
 
+      <div class="block mt-2">
+        <Toggle v-model="colorInversion" variant="outline">Color Inversion</Toggle>
+      </div>
 
       <p>Size</p>
       <NumberInput v-model="size[0]" :default-value="outputSize[0]" :max="2048" :min="0" class="w-full" />
@@ -166,11 +168,6 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
           <SelectItem :value="DisplayMode.Square">Square</SelectItem>
         </SelectContent>
       </Select>
-
-      <p class="font-bold">Color Inversion</p>
-      <Toggle v-model="colorInversion" class="w-full" variant="outline">
-        {{ colorInversion ? 'Enabled' : 'Disabled' }}
-      </Toggle>
 
       <p class="font-bold">View</p>
       <div class="flex gap-2">
@@ -209,8 +206,8 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
             class="w-full object-contain max-w-full max-h-full m-auto " />
           <video v-else :src="imagePreview" ref="video" class="w-full max-w-full max-h-full m-auto" controls autoplay />
         </div>
-        <AsciiOutput v-if="visibility.output" :color-inversion="colorInversion" :text="output" :size="outputSize" :mode="mode"
-                     class="flex-1 m-auto overflow-hidden" :style="{
+        <AsciiOutput v-if="visibility.output" :color-inversion="colorInversion" :text="output" :size="outputSize"
+          :mode="mode" class="flex-1 m-auto overflow-hidden" :style="{
             maxWidth: (visibility.output &&
               visibility.source) ? '50%' : ''
           }" />
