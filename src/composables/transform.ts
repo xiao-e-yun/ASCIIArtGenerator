@@ -10,10 +10,13 @@ declare global {
 }
 
 export const useTransform = (
-  image: MaybeRefOrGetter<ImageBitmap | HTMLCanvasElement | null>,
+  image: MaybeRefOrGetter<OffscreenCanvas | null>,
   outputSize: MaybeRefOrGetter<[number, number]>,
   granularity: MaybeRefOrGetter<[number, number]>,
   charactersPixels: MaybeRefOrGetter<[string, number[] | null][]>,
+  characterBrightnessBounds: MaybeRefOrGetter<[number, number]>,
+  colorInversion: MaybeRefOrGetter<boolean> = false,
+  brightnessBounds: MaybeRefOrGetter<[number, number]> = [0, 1],
 ) => {
   // preload kernels
   // gpu.js can't pass the kernels after vite transforms them
@@ -64,15 +67,19 @@ export const useTransform = (
       Math.floor(toValue(outputSize)[1] * $granularity[1]),
     ]
     const brightness = getBrightness.setOutput(brightnessSize)($image, [
-      $image.width / brightnessSize[0],
-      $image.height / brightnessSize[1],
-    ])
+        $image.width / brightnessSize[0],
+        $image.height / brightnessSize[1],
+      ],
+      toValue(colorInversion),
+      toValue(brightnessBounds),
+    )
 
     const mappedCharacters = getCharacters.value.setOutput(toValue(outputSize))(
       brightness,
       $granularity,
       mappedPixels.map(([, pixels]) => pixels as number[]),
       mappedPixels.length,
+      toValue(characterBrightnessBounds),
     ) as number[][]
 
     return mappedCharacters

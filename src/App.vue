@@ -18,6 +18,7 @@ import {ArrowLeftFromLine, ArrowRightToLine, Github} from 'lucide-vue-next'
 import {Separator} from './components/ui/separator'
 import {Textarea} from './components/ui/textarea'
 import {Toggle} from './components/ui/toggle'
+import {Input} from './components/ui/input'
 
 const file = ref<File | null>()
 
@@ -28,7 +29,7 @@ const characters = useLocalStorage(
 const granularity = useLocalStorage('granularity', [1, 2] as [number, number])
 const mode = useLocalStorage<DisplayMode>('display-mode', DisplayMode.Normal)
 
-const frame = ref<HTMLCanvasElement>(document.createElement('canvas'))
+const frame = ref<OffscreenCanvas>(new OffscreenCanvas(0, 0))
 const frameCtx = frame.value.getContext('2d')!
 
 const image = useTemplateRef<HTMLImageElement>('image')
@@ -37,6 +38,8 @@ const video = useTemplateRef<HTMLVideoElement>('video')
 const size = reactive<[number | undefined, number | undefined]>([64, undefined])
 const doubleSize = useLocalStorage('double-size', true)
 const isDouble = computed(() => mode.value === DisplayMode.Normal && doubleSize.value)
+const colorInversion = useLocalStorage('color-inversion', false)
+const brightnessBounds = useLocalStorage('brightness-bounds', [0, 1] as [number, number])
 
 const outputSize = computed(() => {
   const aspectRatio = frame.value.width / frame.value.height
@@ -46,14 +49,14 @@ const outputSize = computed(() => {
   ] as [number, number]
 })
 
-const {charactersPixels} = useTextRenderer(characters, granularity)
-const {output} = useTransform(frame, outputSize, granularity, charactersPixels)
+const {charactersPixels,characterBrightnessBounds} = useTextRenderer(characters, granularity)
+const {output} = useTransform(frame, outputSize, granularity, charactersPixels, characterBrightnessBounds,
+colorInversion, brightnessBounds)
 
 watch(file, async (file) => {
   if (!file) {
     frame.value.width = 0
     frame.value.height = 0
-    triggerRef(frame)
     return
   }
 
@@ -88,6 +91,7 @@ watch(file, async (file) => {
       $video.requestVideoFrameCallback(next)
     }
     frameCtx.drawImage($video, 0, 0)
+    triggerRef(frame)
     $video.requestVideoFrameCallback(next)
   }
 })
@@ -134,6 +138,11 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
         <ArrowLeftFromLine />
       </Button>
 
+      <p>Brightness Bounds</p>
+      <Input type="range" v-model.number="brightnessBounds[0]" :max="1" :min="0" :step="0.01" class="w-full" />
+      <Input type="range" v-model.number="brightnessBounds[1]" :max="1" :min="0" :step="0.01" class="w-full" />
+
+
       <p>Size</p>
       <NumberInput v-model="size[0]" :default-value="outputSize[0]" :max="2048" :min="0" class="w-full" />
       <NumberInput v-model="size[1]" :default-value="outputSize[1]" :max="2048" :min="0" class="w-full" :class="{
@@ -158,10 +167,15 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
         </SelectContent>
       </Select>
 
+      <p class="font-bold">Color Inversion</p>
+      <Toggle v-model="colorInversion" class="w-full" variant="outline">
+        {{ colorInversion ? 'Enabled' : 'Disabled' }}
+      </Toggle>
+
       <p class="font-bold">View</p>
       <div class="flex gap-2">
-        <Toggle v-model="visibility.source">Source</Toggle>
-        <Toggle v-model="visibility.output">Output</Toggle>
+        <Toggle v-model="visibility.source" variant="outline">Source</Toggle>
+        <Toggle v-model="visibility.output" variant="outline">Output</Toggle>
       </div>
 
       <p class="font-bold">Option</p>
@@ -195,7 +209,7 @@ const copy = () => navigator.clipboard.writeText(output.value ?? '')
             class="w-full object-contain max-w-full max-h-full m-auto " />
           <video v-else :src="imagePreview" ref="video" class="w-full max-w-full max-h-full m-auto" controls autoplay />
         </div>
-        <AsciiOutput v-if="visibility.output" :text="output" :size="outputSize" :mode="mode"
+        <AsciiOutput v-if="visibility.output" :color-inversion="colorInversion" :text="output" :size="outputSize" :mode="mode"
                      class="flex-1 m-auto overflow-hidden" :style="{
             maxWidth: (visibility.output &&
               visibility.source) ? '50%' : ''

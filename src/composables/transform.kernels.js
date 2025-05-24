@@ -1,12 +1,18 @@
-window.getBrightnessKernel = function (image, scale) {
+window.getBrightnessKernel = function (image, scale, colorInversion, brightnessBounds) {
   const x = Math.floor(scale[0] * this.thread.x)
   const y = Math.floor(scale[1] * this.thread.y)
 
   const pixel = image[y][x]
-  return (1 - (pixel.r * 0.2126 + pixel.g * 0.7152 + pixel.b * 0.0722)) * pixel.a
+  if (colorInversion) {
+    return (1.0 - (pixel.r * 0.2126 + pixel.g * 0.7152 + pixel.b * 0.0722) * pixel.a
+      - brightnessBounds[0]) / (brightnessBounds[1] - brightnessBounds[0])
+  } else {
+    return ((pixel.r * 0.2126 + pixel.g * 0.7152 + pixel.b * 0.0722) * pixel.a
+      - brightnessBounds[0]) / (brightnessBounds[1] - brightnessBounds[0])
+  }
 }
 
-window.getCharactersKernel = function (image, granularity, characters, characterSize) {
+window.getCharactersKernel = function (image, granularity, characters, characterSize, characterBrightnessBounds) {
   let target = 0
   let offset = Infinity
 
@@ -21,7 +27,9 @@ window.getCharactersKernel = function (image, granularity, characters, character
         const pixel = image[y][x]
 
         const p = rx + ry * granularity[0]
-        characterOffset += Math.abs(pixel - characters[i][p])
+        const character = characters[i][p]
+        const characterBrightness = (character - characterBrightnessBounds[0]) / (characterBrightnessBounds[1] - characterBrightnessBounds[0])
+        characterOffset += Math.abs(pixel - characterBrightness) ** 2
       }
     }
 
